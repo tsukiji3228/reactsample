@@ -1,8 +1,18 @@
+
 const aws = require('aws-sdk');
-const docClient = new aws.DynamoDB.DocumentClient(
-    {region: 'ap-northeast-1'
-    // ,endpoint: 'http://localhost:8000'
-    });
+var docClient;
+
+const setEndpoint = (e) => {
+    let dynamodbConfig = {region: 'ap-northeast-1'}
+    if (e != ""){
+        dynamodbConfig.endpoint = e;
+    }
+    docClient = new aws.DynamoDB.DocumentClient(dynamodbConfig);
+
+}
+
+
+
 
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
@@ -163,4 +173,5 @@ router.get('/init', function(req, res) {
 
 });
 
-module.exports = router;
+module.exports.router = router;
+module.exports.setEndpoint = setEndpoint;
