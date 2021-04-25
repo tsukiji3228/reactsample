@@ -1,6 +1,6 @@
 # nodeのモジュールはver管理しない
 node_modules/
-
+.serverless/
 yarn.lock
 yarn-error.log
 package-lock.json
