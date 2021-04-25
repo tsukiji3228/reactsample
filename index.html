@@ -1,0 +1,202 @@
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+</head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<div class="row m-3 p-3" id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+<style>
+    .red {color: red;}
+    .blue {color: blue;}
+</style>
+
+<script type="text/babel">
+
+    function Number()
+    {
+        const numbersState = React.useState([
+            {number: 1, color:"red"}
+            ,{number: 2, color:"red"}
+            ,{number: 3, color:"red"}
+        ]);
+
+        const fetchResponse = () =>
+        {
+            const stage = location.pathname === '/' ? '' : location.pathname
+            fetch(stage + '/init')
+            .then( res => res.json() )
+            .then( res => {
+                setNumbers(res)
+            })
+        }
+
+        const fetchPut = (text) =>
+        {
+            const data = {number: text[0].number, memo: text[0].memo, color:"red"}
+            const stage = location.pathname === '/' ? '' : location.pathname
+            fetch(stage + '/post',{
+                method:'POST',
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(data)})
+            .then(res => {
+                fetchResponse()
+            })
+ 
+        }
+
+        const fetchUpdate = (text) =>
+        {
+            const data = {pk: text.pk, sk: text.sk, color: text.color}
+            const stage = location.pathname === '/' ? '' : location.pathname
+            fetch(stage + '/update',{
+                method:'POST',
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(data)})
+            .then(res => {
+                fetchResponse()
+            })
+ 
+        }
+
+        React.useEffect(() =>{
+            fetchResponse();
+        }, []);
+
+
+        // const loop = () => {
+        //     setTimeout(function(){
+        //     fetchResponse()
+        //     loop();
+        // }, 5000)};
+
+        // loop();
+
+        const numbers = numbersState[0];
+        const setNumbers = numbersState[1];
+
+        const addNUmber = text => 
+        {
+            fetchPut(text);
+            // setNumbers(text.concat(numbers));
+        };
+
+
+        
+
+
+
+        const switchColor = id =>
+        {
+            const tmp = numbers.slice();
+            if(tmp[id].color === "red")
+            {
+                tmp[id].color = "blue";
+            }
+            else
+            {
+                tmp[id].color = "red";
+            }
+            fetchUpdate(tmp[id]);
+            // setNumbers(tmp);
+        }
+
+        const redTotal = numbers.filter(x => x.color === "red")
+                                .reduce((prev, current) => prev + current.number, 0);
+        const blueTotal = numbers.filter(x => x.color === "blue")
+                                .reduce((prev, current) => prev + current.number, 0);
+        const total = redTotal + blueTotal;
+    
+        // <button class="col-6 btn-dark" onClick={fetchPut}>put DB</button>
+
+        return <>
+            <button class="col btn-dark" onClick={fetchResponse}>get DB</button>
+
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item text-center">total={total}</li>
+            </ul>
+
+            <p>
+                <button class="col-6 btn btn-primary">{redTotal}</button>
+                <button class="col-6 btn btn-secondary">{blueTotal}</button>
+            </p>
+            <p></p>
+
+
+
+
+            <Input onAdd={addNUmber} />
+            {numbers.map((x,y) => <ButtonNumber number={x.number} color={x.color}  id={y} func={switchColor} memo={x.memo}/>)}
+        </>
+    }
+
+    function ButtonNumber({number, color, func, id, memo})
+    {
+
+        const handleOnClick = e => {
+            func(id)
+        }
+
+        let style;
+        if (color === "red")
+        {
+            style = "primary"
+        }
+        else
+        {
+            style = "secondary"
+        }
+
+        return <p><button class={"col-12 btn btn-"+style} onClick={handleOnClick}>{number} {memo}</button></p>
+    }
+
+    function Input({onAdd})
+    {
+        const [text, setText] = React.useState({price: '', memo: ''});
+        const handleChange1 = e => {
+            const tmp = {price: e.target.value, memo: text.memo}
+            setText(tmp);
+        }
+        const handleChange2 = e => {
+            const tmp = {price: text.price, memo: e.target.value}
+            setText(tmp);
+        }
+        const handleKeyDown = e => {
+            if (e.key === 'Enter')
+            {
+                if (parseInt(text.price, 10) > 0)
+                {
+
+                    onAdd([{number: parseInt(text.price, 10), memo: text.memo}]);
+                    const tmp = {price: '', memo: ''}
+                    setText(tmp);
+
+                }
+            }
+        };
+
+        return <p>
+            <input class="col-12 col-sm-6" type="number" placeholder="price" value={text.price} onChange={handleChange1} onKeyDown={handleKeyDown}/>
+            <input class="col-12 col-sm-6" type="text" placeholder="memo" value={text.memo} onChange={handleChange2} onKeyDown={handleKeyDown}/>
+        </p>
+    }
+
+    function Cal()
+    {
+        return <>
+            <Number />
+        </>
+    }
+
+    
+    const root = document.getElementById('root');
+    ReactDOM.render(<Cal />, root);
+
+
+
+
+</script>
