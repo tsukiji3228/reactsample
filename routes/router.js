@@ -146,10 +146,38 @@ router.post('/update', jsonParser, function(req, res) {
 
 });
 
+router.post('/delete', jsonParser, function(req, res) {
+
+
+    const params = {
+        TableName: 'test',
+        Key:{
+            "pk": req.body.pk,
+            "sk": req.body.sk
+        },
+    };
+  
+     docClient.delete(params, function(err, data) {
+          if (err){
+              console.log(err);
+
+          } else {
+            res.send("OK");
+
+
+
+          }
+      });
+
+
+  res.set({ 'Access-Control-Allow-Origin': '*' });
+
+});
+
 
 router.get('/init', function(req, res) {
 
-    
+
     const params = {
       TableName : 'test',
       ExpressionAttributeNames:{'#y': 'pk'},

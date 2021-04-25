@@ -19,20 +19,27 @@
 
     function Number()
     {
-        const numbersState = React.useState([
+        const [numbers, setNumbers] = React.useState([
             {number: 1, color:"red"}
             ,{number: 2, color:"red"}
             ,{number: 3, color:"red"}
         ]);
 
+        const [per, setPer] = React.useState(
+            {per1: 5, per2: 5}
+        );
+
         const fetchResponse = () =>
         {
+            
+
             const stage = location.pathname === '/' ? '' : location.pathname
-            fetch(stage + '/init')
+            fetch(stage + '/init?sk=1')
             .then( res => res.json() )
             .then( res => {
                 setNumbers(res)
             })
+
         }
 
         const fetchPut = (text) =>
@@ -63,21 +70,42 @@
  
         }
 
+        const fetchDelete = (text) =>
+        {
+            const data = {pk: text.pk, sk: text.sk, color: text.color}
+            const stage = location.pathname === '/' ? '' : location.pathname
+            fetch(stage + '/delete',{
+                method:'POST',
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(data)})
+            .then(res => {
+                fetchResponse()
+            })
+ 
+        }
+        
+        const getMax = () => {
+            return Math.max.apply(null, numbers.map(v => {return v.sk;}));
+
+        };
+
         React.useEffect(() =>{
+            
             fetchResponse();
+            loop();
         }, []);
 
 
-        // const loop = () => {
-        //     setTimeout(function(){
-        //     fetchResponse()
-        //     loop();
-        // }, 5000)};
+        const loop = () => {
 
-        // loop();
+            setTimeout(function(){
+            fetchResponse()
+            loop();
+        }, 5000)};
 
-        const numbers = numbersState[0];
-        const setNumbers = numbersState[1];
+         
+
+
 
         const addNUmber = text => 
         {
@@ -105,24 +133,50 @@
             // setNumbers(tmp);
         }
 
+        const deleteData = id =>
+        {
+            const tmp = numbers.slice();
+            fetchDelete(tmp[id]);
+        }
+
         const redTotal = numbers.filter(x => x.color === "red")
                                 .reduce((prev, current) => prev + current.number, 0);
         const blueTotal = numbers.filter(x => x.color === "blue")
                                 .reduce((prev, current) => prev + current.number, 0);
         const total = redTotal + blueTotal;
-    
-        // <button class="col-6 btn-dark" onClick={fetchPut}>put DB</button>
+        
+        const wari = {wari1: Math.ceil(total / 10 * per.per1), wari2: Math.ceil(total /10 * per.per2)};
+        const sub = {sub1: redTotal - wari.wari1, sub2: blueTotal - wari.wari2};
+
+
+        const onClickPer1 = () => {
+            const tmp = {per1:per.per1 + 1, per2:per.per2 - 1}
+            if(tmp.per1 <= 10 && tmp.per1 >= 0)
+            {
+                setPer(tmp);
+            }
+        };
+
+        const onClickPer2 = () => {
+            const tmp = {per1:per.per1 - 1, per2:per.per2 + 1}
+            if(tmp.per1 <= 10 && tmp.per1 >= 0)
+            {
+                setPer(tmp);
+            }
+        };
+
 
         return <>
-            <button class="col btn-dark" onClick={fetchResponse}>get DB</button>
+ 
+            <button className="col btn-dark" onClick={fetchResponse}>reload</button>
 
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item text-center">total={total}</li>
+            <ul className="list-group list-group-flush">
+                <li className="list-group-item text-center">total={total} ({wari.wari1}/{wari.wari2})({per.per1}:{per.per2})</li>
             </ul>
 
             <p>
-                <button class="col-6 btn btn-primary">{redTotal}</button>
-                <button class="col-6 btn btn-secondary">{blueTotal}</button>
+                <button className="col-6 btn btn-primary" onClick={onClickPer1}>{redTotal}({sub.sub1})</button>
+                <button className="col-6 btn btn-secondary" onClick={onClickPer2}>{blueTotal}({sub.sub2})</button>
             </p>
             <p></p>
 
@@ -130,15 +184,19 @@
 
 
             <Input onAdd={addNUmber} />
-            {numbers.map((x,y) => <ButtonNumber number={x.number} color={x.color}  id={y} func={switchColor} memo={x.memo}/>)}
+            {numbers.map((x,y) => <ButtonNumber number={x.number} color={x.color}  id={y} func={switchColor} funcDelete={deleteData} memo={x.memo}/>)}
         </>
     }
 
-    function ButtonNumber({number, color, func, id, memo})
+    function ButtonNumber({number, color, func, id, memo, funcDelete})
     {
 
         const handleOnClick = e => {
             func(id)
+        }
+
+        const handleOnClick2 = e => {
+            funcDelete(id)
         }
 
         let style;
@@ -151,7 +209,15 @@
             style = "secondary"
         }
 
-        return <p><button class={"col-12 btn btn-"+style} onClick={handleOnClick}>{number} {memo}</button></p>
+        return <p>
+            <button className={"col-9 btn btn-"+style} onClick={handleOnClick}>{number} {memo}</button>
+            <button className={"m-1 col-2 btn btn-"+style} onClick={handleOnClick2}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-x-square" viewBox="0 0 16 16">
+                    <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>　del
+            </button>
+        </p>
     }
 
     function Input({onAdd})
@@ -180,8 +246,8 @@
         };
 
         return <p>
-            <input class="col-12 col-sm-6" type="number" placeholder="price" value={text.price} onChange={handleChange1} onKeyDown={handleKeyDown}/>
-            <input class="col-12 col-sm-6" type="text" placeholder="memo" value={text.memo} onChange={handleChange2} onKeyDown={handleKeyDown}/>
+            <input className="col-12 col-sm-6" type="number" placeholder="price" value={text.price} onChange={handleChange1} onKeyDown={handleKeyDown}/>
+            <input className="col-12 col-sm-6" type="text" placeholder="memo" value={text.memo} onChange={handleChange2} onKeyDown={handleKeyDown}/>
         </p>
     }
 
